@@ -1,0 +1,1063 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{url}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+\newcommand{\GaugeHand}{\textsc{GaugeHand}}
+\newcommand{\etal}{et~al.}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\title{\GaugeHand: Feasibility, Market, and MVP Roadmap for a Tactile Contour-Field Robotic Hand}
+\author{Internal research report}
+\date{June 6, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report evaluates the feasibility of a robotic end-effector based on a three-dimensional contour gauge: a dense field of simple sliding contact elements that conform to an object, lock into a load-bearing morphology, and provide tactile shape data. The core conclusion is that the concept is technically feasible and strategically interesting, but should not be framed as a direct copy of the human hand. Its strongest framing is a tactile, lockable, distributed contact field that substitutes dense mechanical contact and tactile geometry for anthropomorphic finger kinematics. The concept is most promising for unknown-object pickup, high-mix material handling, tool-handle stabilization, fragile-object support, shape capture, and manipulation under visual uncertainty. Its main technical risk is not passive shape conformity; pin arrays and jamming grippers already demonstrate that. The main technical risk is controlled shear: without a way to generate tangential forces, the device is a capable universal gripper and tactile scanner, but not a true in-hand manipulator. A staged product path is recommended: first a self-sensing lockable pin-array pad, then a two-pad adaptive gripper, then a shear-capable pin-field module, and only later a multi-pad hand. The near-term MVP should be an opposed two-pad gripper with passive normal pins, shared locking, pin-depth sensing, soft replaceable contact tips, and a simple API that returns a contact height map and grasp stability metrics.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Executive Conclusion}
+
+The idea is worth pursuing. The highest-probability path is not to build a fully anthropomorphic hand with hundreds of individually actuated pins. The highest-probability path is to build a modular end-effector that uses many passive or semi-passive contact elements to acquire shape, distribute force, and stabilize objects. That module can then be attached to simple macro mechanisms: a parallel gripper, a wrist, two or three underactuated fingers, or a mobile manipulator.
+
+The essential claim is:
+
+\begin{quote}
+Dense contact plus tactile geometry can remove part of the burden now placed on anthropomorphic fingers, visual pose estimation, and high-dimensional hand control.
+\end{quote}
+
+The concept is feasible if it is scoped correctly:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Feasible now:} passive pin-field adaptation, lockable shape retention, coarse tactile depth maps, irregular-object pickup, improved contact-area distribution, and stable tool holding.
+  \item \textbf{Feasible with focused R\&D:} slip-aware grasping, local pressure balancing, soft-skin shear sensing, low-dimensional tactile control, and simple in-grasp translation or rotation.
+  \item \textbf{High-risk if attempted too early:} fully active per-pin actuation, human-hand-equivalent dexterity, fast in-hand manipulation of arbitrary objects, and general-purpose humanoid-hand replacement.
+\end{itemize}
+
+The recommended first product thesis is:
+
+\begin{quote}
+\GaugeHand{} is a self-sensing, lockable contour-field gripper for high-mix, irregular, fragile, and poorly localized objects.
+\end{quote}
+
+The recommended research thesis is:
+
+\begin{quote}
+\GaugeHand{} is a tactile contour-field hand that converts object geometry into a dense, lockable contact map, then uses low-dimensional shear modes for in-hand manipulation.
+\end{quote}
+
+These two theses should be kept separate. The first can become an MVP. The second can become a longer research program.
+
+\section{Problem Statement}
+
+Most robotic hands solve grasping by approximating the human hand: several fingers, many joints, tendon transmissions, high-dimensional actuation, and sparse contact patches. This works well for tasks designed around human hands, but creates difficult engineering trade-offs:
+
+\begin{itemize}[leftmargin=*]
+  \item Many actuators and joints increase cost, mass, calibration work, maintenance, and control complexity.
+  \item Sparse fingertips require accurate object pose estimation and grasp planning.
+  \item Contact sensing is difficult to integrate across large areas of the hand.
+  \item Tool use requires stable contact and friction, not only finger-like geometry.
+  \item In real factories and warehouses, objects are often irregular, partially occluded, deformable, reflective, transparent, flexible, or poorly localized.
+\end{itemize}
+
+High-end hands demonstrate the cost of anthropomorphic dexterity. Shadow Robot reports 20 DC motors, 24 joints, and more than 100 sensors in its Dexterous Hand series \cite{shadow_dexterous_hand}. Allegro Hand markets 9-DOF and 16-DOF robotic hands with pressure-sensitive tactile options \cite{allegro_hand}. These systems are valuable, but they are research-grade or high-end components. For many industrial tasks, a simpler high-contact-area end-effector may be more useful than a hand-shaped mechanism.
+
+\GaugeHand{} explores a different principle:
+
+\begin{quote}
+Use many simple contact elements to mechanically sample and support object geometry, instead of using a few complex fingers to intentionally place sparse contacts.
+\end{quote}
+
+The analogy is a three-dimensional contour gauge or pin-art wall. A surface made of sliding pins conforms to the object. If the pins can lock, sense, and transmit useful tangential forces, the surface becomes more than a passive impression device; it becomes a distributed contact manipulator.
+
+\section{Terminology}
+
+The concept overlaps with several existing terms. Clear vocabulary helps avoid overclaiming.
+
+\begin{longtable}{L{0.25\textwidth} L{0.32\textwidth} L{0.33\textwidth}}
+\toprule
+\textbf{Term} & \textbf{Meaning} & \textbf{Relevance} \\
+\midrule
+\endhead
+Pin art or pin screen & A dense array of sliding pins that visually records a three-dimensional impression. & Good public analogy; weak technical term. \\
+Contour gauge or profile gauge & A hand tool that records a two-dimensional edge contour with many sliding elements. & Good mechanical analogy, but usually 2D. \\
+Pin-array gripper & A robotic gripper whose contact surface contains independently moving pins. & Closest existing technical category. \\
+Distributed manipulation & Object manipulation by many simple local actuators or contact points. & Best control-theoretic category. \\
+Tactile contour field & A dense contact surface that measures local displacement and possibly force/shear. & Recommended term for the new architecture. \\
+Lockable morphology & The ability to passively conform, then stiffen or lock in that shape. & Core product differentiator. \\
+Shear-capable contact field & A surface that can produce tangential forces, not just normal reaction forces. & Required for real in-hand manipulation. \\
+\bottomrule
+\end{longtable}
+
+\section{Research Method and Source Confidence}
+
+This report uses three evidence classes:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Primary technical literature:} pin-array grippers, granular jamming, tactile sensing, distributed manipulation arrays, and underactuated hands.
+  \item \textbf{Official product data:} representative commercial dexterous hands and robotic end-effector vendors.
+  \item \textbf{Market data:} IFR robotics statistics, A3 North American robot order data, and third-party end-of-arm-tooling market estimates.
+\end{enumerate}
+
+Market figures should be treated as directional rather than exact. IFR and A3 are high-confidence sources for installed robot volumes and order trends. Third-party end-of-arm-tooling market reports differ in methodology and are often commercial lead-generation documents; they are useful for triangulating scale, not for precise investment decisions.
+
+\section{Literature Review}
+
+\subsection{Pin-Array Grippers}
+
+Mo and Zhang's meshed pin-array gripper is one of the closest early precedents \cite{mo2019meshed}. The paper starts from pin-art and universal socket ideas, then converts a pin array into a gripper. Its key message is that object geometry can passively program the gripper shape. The system adapts before detailed object modeling, reducing the need to compute exact grasp points.
+
+The 2025 IEEE Transactions on Robotics paper by Lee \etal{} is especially relevant because it moves pin arrays closer to tool manipulation \cite{lee2025frictional}. The gripper uses a double-sided pin-array mechanism with 5 x 5 pins per side, spring-supported passive pin motion, soft frictional fingertips, and one motor for the gripper plates. The authors report a 2400 g stable payload, compared with 800 g for an RG2-FT baseline and 400 g for a frictional flat gripper. They also report substantially lower tool pitch-angle errors in hammer and file tasks.
+
+This supports a core \GaugeHand{} hypothesis: pin arrays are not only visual gimmicks or passive impressions. They can create better support geometry and more stable tool handling than flat jaws.
+
+However, the pin-array grippers in the literature are mostly grasping devices. They do not yet solve:
+
+\begin{itemize}[leftmargin=*]
+  \item high-resolution tactile perception over the full field;
+  \item controlled local shear;
+  \item object pose estimation from pin displacement;
+  \item low-dimensional in-hand manipulation;
+  \item manufacturable, cleanable, robust cartridges for industrial use.
+\end{itemize}
+
+\subsection{Self-Sensing Pin Arrays}
+
+Schroeder \etal{} proposed additive-manufactured capacitive displacement sensors for adaptive pin-array grippers \cite{schroeder2025capacitive}. Their sensor concept measures the displacement of individual pins using a parallel-plate capacitor geometry. The prototype targets a 20 mm measurement range with 1 mm desired resolution and reports very high linearity in experimental tests.
+
+This is important because a pin-field gripper becomes much more valuable when its morphology is measurable. A passive contour field can hold an object. A self-sensing contour field can also estimate:
+
+\begin{itemize}[leftmargin=*]
+  \item local object shape;
+  \item contact patch size;
+  \item closure asymmetry;
+  \item likely slip direction;
+  \item object pose relative to the gripper;
+  \item whether the object is seated correctly.
+\end{itemize}
+
+Pin displacement alone is not full tactile sensing, but it is the minimum viable tactile signal for \GaugeHand{}.
+
+\subsection{Jamming Grippers}
+
+Brown \etal{} demonstrated a universal gripper based on granular jamming \cite{brown2010jamming}. A bag of granular material conforms to the object, then vacuum causes it to jam and harden. The paper reports that volume changes below 0.5\% can be enough to grip objects reliably, and identifies friction, suction, and interlocking as key gripping mechanisms.
+
+The jamming gripper is important because it proves that a non-anthropomorphic universal gripper can work by passive shape adaptation. But it also reveals the gap that \GaugeHand{} can exploit:
+
+\begin{itemize}[leftmargin=*]
+  \item jamming grippers adapt well but provide limited explicit shape readout;
+  \item they are strong at pickup but weak at precise reorientation;
+  \item they can be difficult to clean and package for some industrial environments;
+  \item they do not naturally provide controllable local shear.
+\end{itemize}
+
+\GaugeHand{} should borrow the passive-adaptation and locking insight, but avoid being only a passive universal gripper.
+
+\subsection{Underactuated and Soft Hands}
+
+Underactuated hands reduce actuator count by allowing passive joint adaptation. This principle has been studied for decades \cite{laliberte2002underactuation,birglen2006force}. Pisa/IIT SoftHand 2 is a strong modern example: Della Santina \etal{} show that two degrees of actuation plus hand softness can perform diverse grasping and manipulation tasks, including rotation, jar opening, and pouring \cite{dellasantina2018softhand2}.
+
+The lesson is not that \GaugeHand{} should copy a hand. The lesson is:
+
+\begin{quote}
+Good morphology can compress control dimensionality.
+\end{quote}
+
+\GaugeHand{} should not attempt independent high-bandwidth control over every pin. It should use morphology, locking, local compliance, and a few low-dimensional modes.
+
+\subsection{Distributed Manipulation Arrays}
+
+ArrayBot is a central reference \cite{xue2023arraybot}. It uses a 16 x 16 array of vertically sliding pillars with tactile sensors to support, perceive, and manipulate tabletop objects. The authors use reinforcement learning and reshape the action space using local action patches and low-frequency modes. They report transfer to a physical robot without domain randomization.
+
+Linear Delta Arrays demonstrate a different distributed-manipulation extreme: 64 linearly actuated delta robots create a 192-DOF compliant manipulator capable of translation, alignment, prehensile squeezing, lifting, and grasping \cite{patil2022linear_delta_arrays}.
+
+These works support the deepest version of the \GaugeHand{} thesis: dexterity can emerge from many simple local contact elements, not only from human-like fingers. But they also show why a fully active pin-field hand is a large research project. The first \GaugeHand{} product should use passive pins and low-dimensional actuation; it should not start as an ArrayBot wrapped around an object.
+
+\subsection{Tactile Sensing}
+
+GelSight shows the value of geometry-rich tactile sensing \cite{yuan2017gelsight}. It measures deformation of a soft elastomer surface and can infer contact geometry, force, and slip. F-TAC Hand integrates high-resolution tactile sensing over much of a biomimetic hand surface and reports improved real-world grasping over non-tactile alternatives \cite{zhu2025ftac}. AllTact Fin Ray shows another direction: a compliant gripper with camera-based whole-body tactile sensing \cite{liang2025alltact}.
+
+These works imply that \GaugeHand{} should be designed as a tactile device from the beginning. Adding sensing later will likely force a redesign of the pin cartridge, wiring, controller, data interface, and mechanical tolerances.
+
+\subsection{Anthropomorphic Hand Skepticism}
+
+Fabisch \etal{} ask whether robots really need anthropomorphic hands \cite{fabisch2025anthropomorphic}. They review 125 papers from 2019 to 2025 and argue that complex five-fingered hands are not necessary for all tasks. Their conclusion aligns with the premise of \GaugeHand{}: for many applications, robustness, softness, sensing, and environmental contact may matter more than copying human-hand DOF.
+
+\section{Technical Feasibility Analysis}
+
+\subsection{Feasibility Summary}
+
+\begin{longtable}{L{0.24\textwidth} L{0.16\textwidth} L{0.48\textwidth}}
+\toprule
+\textbf{Subsystem} & \textbf{Feasibility} & \textbf{Reasoning} \\
+\midrule
+\endhead
+Passive pin adaptation & High & Existing pin-array grippers and contour gauges already show the principle. The challenge is robustness, not proof of concept. \\
+Shared locking & Medium-high & Friction clamps, brake plates, and jamming layers are feasible. Uniform locking force and wear are the hard parts. \\
+Pin-depth sensing & High & Hall, optical, magnetic, resistive, and capacitive approaches are plausible; capacitive pin sensing has recent literature support. \\
+Normal force estimation & Medium & Can be estimated from spring compression if calibrated, but friction, preload, and hysteresis complicate accuracy. \\
+Shear sensing & Medium & Soft-skin markers, optical tactile layers, or strain elements can measure shear, but packaging is harder than depth sensing. \\
+Controlled shear actuation & Medium-low for MVP, medium for R\&D & This is the critical missing piece. A moving skin or sparse lateral actuators are plausible but need experimentation. \\
+Full dexterous manipulation & Low near-term & Requires controlled shear, contact planning, slip control, and object-pose estimation. Not a first product target. \\
+Industrial productization & Medium & Robust cartridges, cleanability, serviceability, safety, and cost control are nontrivial but manageable if the first market is narrow. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Mechanical Feasibility}
+
+The mechanical basis is sound. A field of sliding pins can conform to object geometry. The important design variables are:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Pin pitch:} smaller pitch improves spatial resolution, but increases part count and reduces pin strength.
+  \item \textbf{Pin stroke:} longer stroke handles more geometry variation, but increases buckling and guide-friction risk.
+  \item \textbf{Pin diameter:} larger pins improve strength and reduce jamming, but reduce spatial resolution.
+  \item \textbf{Tip material:} soft high-friction tips reduce damage and slip, but blur geometry and wear faster.
+  \item \textbf{Guide length:} longer guides reduce angular binding, but increase friction and cartridge depth.
+  \item \textbf{Return spring:} stronger springs improve contact stability but increase peak pressure and insertion force.
+  \item \textbf{Locking method:} shared locking is simple but can lock unevenly; local locking is better but expensive.
+\end{itemize}
+
+For a first prototype, the right target is not maximum pin density. It is reliable motion under dirty, off-axis, repeated contact. A lower-resolution 8 to 12 mm pitch prototype that never binds is better than a high-resolution 3 mm pitch prototype that only works in a clean lab.
+
+\subsection{Contact Mechanics}
+
+The gripper can hold an object through several mechanisms:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Normal force:} macro closure presses the pads into the object.
+  \item \textbf{Friction:} soft or textured tips resist tangential slip.
+  \item \textbf{Geometric interlocking:} pins support concavities, edges, shoulders, or irregular profiles.
+  \item \textbf{Caging:} opposing pads or multiple pads constrain gross escape directions.
+  \item \textbf{Locking:} the pin field becomes a temporary custom fixture.
+\end{enumerate}
+
+This is more robust than flat jaws for irregular objects because the contact surface adapts. But it is not magic. Failure occurs when:
+
+\begin{itemize}[leftmargin=*]
+  \item the object has low-friction smooth surfaces and no geometric features;
+  \item the object is too soft and deforms away from the pins;
+  \item the center of mass creates a large moment outside the support polygon;
+  \item pin tips create damaging pressure points;
+  \item the gripper cannot generate enough closure force;
+  \item pins bind before seating fully.
+\end{itemize}
+
+\subsection{The Shear Problem}
+
+The central technical issue is the difference between conformity and dexterity.
+
+A normal pin records depth along one axis. That creates dense normal compliance. Dexterous manipulation requires tangential work:
+
+\begin{itemize}[leftmargin=*]
+  \item rotate the object;
+  \item translate it within the grasp;
+  \item correct slip;
+  \item roll the object between contact patches;
+  \item release one patch while maintaining another;
+  \item apply a torque without losing force closure.
+\end{itemize}
+
+If \GaugeHand{} only has passive normal pins, it is a strong gripper and shape sensor. If it can also generate controllable local shear, it becomes a candidate hand architecture.
+
+The most practical shear concepts are:
+
+\begin{longtable}{L{0.22\textwidth} L{0.33\textwidth} L{0.33\textwidth}}
+\toprule
+\textbf{Concept} & \textbf{Advantages} & \textbf{Risks} \\
+\midrule
+\endhead
+Soft skin pulled in x/y over pins & Low actuator count; distributes shear; protects object. & Skin wear, cleaning, calibration drift, nonlinear deformation. \\
+Tilting pin tips & Direct local shear; compact if solved. & Many mechanisms; difficult sealing and assembly. \\
+Rotating eccentric tips & Converts rotation to local tangential force. & Complex tips, debris sensitivity, high part count. \\
+Sparse lateral actuators under a compliant surface & Reduces actuator density; supported by distributed surface research. & Hard modeling; lower local precision. \\
+Unlock-lock rolling cycle with wrist motion & Minimal extra hardware. & Slower and less controllable; requires careful sequence control. \\
+Micro-vibration or traveling-wave pad & Could reduce static friction and settle objects. & Hard to control precisely; may be noisy or damaging. \\
+\bottomrule
+\end{longtable}
+
+The recommended first shear experiment is a moving soft skin over passive pins. It keeps the pin cartridge simple and uses two or four actuators to create global or patch-level tangential motion.
+
+\subsection{Sensing Feasibility}
+
+Sensing should be layered:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Depth map:} each pin reports displacement.
+  \item \textbf{Macro force:} the gripper measures closure force and gross external load.
+  \item \textbf{Slip/shear:} a soft skin, optical markers, strain gauges, or magnetic markers report tangential deformation.
+  \item \textbf{Health monitoring:} stuck pins, excessive friction, failed sensors, and worn tips are detected automatically.
+\end{enumerate}
+
+The MVP can start with depth plus macro force. That is enough to prove shape capture, seating, and grasp stability improvement. Shear sensing should be added before claiming in-hand manipulation.
+
+\subsection{Control Feasibility}
+
+The right control philosophy is low-dimensional tactile servoing. Do not control every pin as an independent robot.
+
+Recommended control loop:
+
+\begin{enumerate}[leftmargin=*]
+  \item Approach using coarse visual pose or blind fixture alignment.
+  \item Close macro gripper until first contact.
+  \item Continue low-speed closure while reading pin displacement.
+  \item Stop when contact area, closure force, or depth-map stability reaches threshold.
+  \item Lock the pin field.
+  \item Estimate object seating and grasp stability.
+  \item Lift slightly and monitor slip.
+  \item If slip occurs, increase closure force, adjust pad shear, or re-seat.
+\end{enumerate}
+
+For manipulation:
+
+\begin{enumerate}[leftmargin=*]
+  \item Unlock selected regions or reduce global clamp.
+  \item Apply low-dimensional shear mode.
+  \item Monitor shear/slip signal.
+  \item Re-lock when desired object pose is reached.
+  \item Re-estimate depth map.
+\end{enumerate}
+
+\subsection{Manufacturing Feasibility}
+
+Manufacturing is feasible, but productization will be dominated by tolerances, cleaning, and serviceability:
+
+\begin{itemize}[leftmargin=*]
+  \item Pins must slide after thousands or millions of cycles without galling.
+  \item The cartridge must tolerate dust, fibers, oil, food residue, and fragments.
+  \item Pins and tips should be replaceable as a cartridge, not individually serviced by users.
+  \item The sensing harness should not require hundreds of fragile wires.
+  \item Calibration should be automated.
+  \item The pad should fail safely if a pin sticks or a sensor dies.
+\end{itemize}
+
+For early prototypes, 3D printing is fine. For product prototypes, use machined or molded pin plates, polymer bushings, stainless pins or low-friction engineering plastics, and replaceable molded elastomer tips.
+
+\section{Market Analysis}
+
+\subsection{Macro Robotics Demand}
+
+Industrial robotics continues to grow despite cyclical downturns. IFR's World Robotics 2025 summary reports 542,076 industrial robots installed in 2024, the second-highest installation count in history, and a global operational stock of 4,663,698 industrial robots \cite{ifr2025industrial}. IFR expects global annual installations to grow to 575,000 units in 2025 and surpass 700,000 by 2028 \cite{ifr2025industrial}.
+
+The same IFR summary reports that China accounted for 54\% of global installations in 2024 and that the five largest markets--China, Japan, the United States, Korea, and Germany--accounted for 80\% of installations \cite{ifr2025industrial}. Customer industries are broadening beyond automotive: electrical/electronics accounted for 24\% of installations in 2024, automotive 23\%, and metal and machinery 16\% \cite{ifr2025industrial}.
+
+This matters because \GaugeHand{} is not a standalone robot. It is an end-effector. Its market grows with installed robot arms, mobile manipulators, cobots, and humanoid manipulation platforms.
+
+\subsection{North American Demand and Cobots}
+
+A3 reports that North American companies ordered 36,766 robots valued at \$2.25 billion in 2025, up 6.6\% in units and 10.1\% in revenue over 2024 \cite{a3_2025_orders}. A3 also reports that collaborative robots accounted for 7,212 units in 2025, or 19.6\% of total robots ordered \cite{a3_2025_orders}.
+
+For \GaugeHand{}, cobots are strategically relevant because they are commonly deployed into high-mix, space-limited, labor-constrained tasks. These are exactly the settings where custom fixtures and rigid grippers become a bottleneck.
+
+\subsection{Service Robots, Logistics, and Medical Robots}
+
+IFR's 2025 service robot summary reports that professional service robot sales grew by 9\% in 2024, medical robot sales by 91\%, and consumer service robot sales by 11\% \cite{ifr2025service}. It also notes that transportation and logistics is the top professional service robot application group by unit sales \cite{ifr2025service}.
+
+This is relevant because mobile manipulators and service robots need end-effectors that can handle more object variability than traditional fixed industrial cells. The opportunity is not limited to factory arms.
+
+\subsection{End-of-Arm Tooling Market}
+
+Third-party estimates place the global robotics end-of-arm-tooling market in the low single-digit billions of dollars. IMARC estimates \$2.8 billion in 2025 and \$4.1 billion by 2034 \cite{imarc_eoat_2026}. Maximize Market Research estimates \$2.14 billion in 2025 and \$4.19 billion by 2032 \cite{maximize_eoat_2026}. Intel Market Research estimates \$2.11 billion in 2024, growing to \$3.38 billion by 2032 \cite{intel_eoat_2025}.
+
+The exact number is less important than the pattern:
+
+\begin{itemize}[leftmargin=*]
+  \item end effectors are a critical component category;
+  \item grippers are reported as the largest EOAT type in at least one market report \cite{imarc_eoat_2026};
+  \item market drivers include automation adoption, cobots, sensor integration, customization, and handling of uniquely shaped objects \cite{imarc_eoat_2026,intel_eoat_2025};
+  \item market challenges include high integration cost, delicate-object handling, irregular objects, and lack of standardization \cite{intel_eoat_2025}.
+\end{itemize}
+
+These are good conditions for \GaugeHand{} if it enters as a practical EOAT module, not as an expensive research hand.
+
+\subsection{Beachhead Segments}
+
+\begin{longtable}{L{0.22\textwidth} L{0.31\textwidth} L{0.35\textwidth}}
+\toprule
+\textbf{Segment} & \textbf{Why it fits} & \textbf{Cautions} \\
+\midrule
+\endhead
+High-mix bin picking & Objects vary in shape and pose; flat jaws and suction often fail on unusual geometry. & Needs debris tolerance and fast cycle time. \\
+Tool handling for mobile manipulators & Handles are irregular, off-center, and require stable orientation. & Tool use needs torque resistance, not just pickup. \\
+Food and agriculture & Fragile, irregular objects benefit from distributed pressure. & Cleaning, food safety, moisture, and skin material are major issues. \\
+Laboratory automation & Tubes, vials, irregular containers, and delicate samples need careful handling. & Validation, contamination control, and reliability expectations are high. \\
+Recycling and disassembly & Objects are unknown, dirty, damaged, and irregular. & Dirt and sharp edges can destroy pin cartridges. \\
+Humanoid robot hands & Humanoids need more robust end-effectors than expensive anthropomorphic hands. & Customer base is immature; requirements change rapidly. \\
+Research and education & Novel tactile/manipulation platform; easier early adopters. & Small market; can distract from industrial product requirements. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Best Initial Customer}
+
+The best first customer is not a general humanoid company asking for human-level hands. The best first customer is a robotics integrator or applied robotics lab with repeated failures caused by object variability.
+
+Ideal first customer profile:
+
+\begin{itemize}[leftmargin=*]
+  \item already owns robot arms or cobots;
+  \item handles high-mix objects;
+  \item currently switches grippers or custom fixtures often;
+  \item has a measurable cost of failed picks, damaged objects, or engineering changeovers;
+  \item can tolerate a moderate cycle time during early deployment;
+  \item values tactile data and not only mechanical gripping.
+\end{itemize}
+
+The earliest paid pilot should probably be one of:
+
+\begin{itemize}[leftmargin=*]
+  \item high-mix tool or part handling in a lab/manufacturing cell;
+  \item irregular object picking where suction is unreliable;
+  \item fragile-object handling where a force-distributed contact field reduces damage;
+  \item research platform for tactile manipulation.
+\end{itemize}
+
+\subsection{Market Positioning}
+
+The product should not be positioned as "the ultimate dexterous hand." That invites comparison with Shadow Hand, Allegro Hand, and humanoid robot hands on their strongest territory.
+
+Better positioning:
+
+\begin{quote}
+An adaptive tactile gripper that forms a temporary custom fixture around unknown objects.
+\end{quote}
+
+Alternative positioning for research:
+
+\begin{quote}
+A lockable tactile contact field for studying dense-contact grasping and low-dimensional manipulation.
+\end{quote}
+
+Product category:
+
+\begin{itemize}[leftmargin=*]
+  \item smart end-of-arm tooling;
+  \item adaptive gripper;
+  \item tactile gripper;
+  \item universal gripper;
+  \item contour-field gripper.
+\end{itemize}
+
+\section{Competitive Analysis}
+
+\subsection{Comparison Against Major Gripper Families}
+
+\begin{longtable}{L{0.18\textwidth} L{0.27\textwidth} L{0.27\textwidth} L{0.18\textwidth}}
+\toprule
+\textbf{Approach} & \textbf{Strengths} & \textbf{Weaknesses} & \textbf{\GaugeHand{} opportunity} \\
+\midrule
+\endhead
+Flat parallel jaws & Simple, fast, cheap, robust, easy to integrate. & Sparse contacts; weak on irregular geometry; can damage fragile objects. & Better irregular-object contact and tactile seating. \\
+Vacuum suction & Fast, cheap, excellent for boxes, sheets, and smooth surfaces. & Weak on porous, dirty, irregular, heavy, or non-airtight objects. & Handle objects suction cannot seal on. \\
+Soft grippers & Gentle, conformal, good for food and fragile goods. & Limited payload, harder precision, material wear, harder cleaning. & Add measurable morphology and lockable support. \\
+Granular jamming & Highly adaptive, simple control, universal pickup. & Weak precise manipulation, limited sensing, pneumatic dependency. & More explicit shape sensing and possible shear control. \\
+Dexterous hands & Tool use, human-like tasks, research value. & Expensive, complex, high control burden, sparse contact sensing. & Lower-cost dense-contact alternative for many non-human tasks. \\
+Pin-array grippers & Strong precedent; good support and shape adaptation. & Often passive and non-tactile; limited manipulation. & Add sensing, locking, modularity, and shear. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Potential Competitive Moats}
+
+The concept itself is not enough. Pin arrays, jamming, and soft grippers all exist. A defensible product would need one or more of:
+
+\begin{itemize}[leftmargin=*]
+  \item a reliable pin cartridge that does not bind in industrial use;
+  \item a low-cost sensing method for many pins;
+  \item a locking mechanism with predictable force distribution;
+  \item a replaceable cleanable soft skin over pins;
+  \item a shear-capable contact field;
+  \item strong software for depth-map interpretation and grasp stability;
+  \item an integration kit for UR, Franka, FANUC, ABB, or ROS 2 systems;
+  \item application-specific datasets and grasp policies.
+\end{itemize}
+
+The moat is likely a system moat: mechanism plus cartridge plus sensing plus control software plus application know-how.
+
+\section{Advantages and Disadvantages}
+
+\subsection{Advantages}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Dense contact:} many pins create many support points, improving stability on irregular shapes.
+  \item \textbf{Mechanical shape acquisition:} the object itself sets the pin field, reducing dependence on precise visual reconstruction.
+  \item \textbf{Potential tactile depth map:} pin displacement can provide a 2.5D contact map during grasping.
+  \item \textbf{Lower macro-DOF:} a simple gripper can gain adaptive behavior without many finger joints.
+  \item \textbf{Better pressure distribution:} soft tips or a skin can reduce local damage relative to hard jaws.
+  \item \textbf{Temporary custom fixture:} locking converts a universal gripper into a task-specific support shape.
+  \item \textbf{Robust to pose uncertainty:} the gripper can tolerate more error in approach than sparse-finger grasps.
+  \item \textbf{Modular path:} a pin-field pad can be used in several architectures: palm, opposed jaws, three-pad hand, or fixture.
+\end{enumerate}
+
+\subsection{Disadvantages}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Part count:} hundreds of pins, springs, guides, magnets, or sensors create assembly and reliability burden.
+  \item \textbf{Binding and contamination:} sliding elements are sensitive to dirt, fibers, sticky residue, and side loads.
+  \item \textbf{Limited dexterity without shear:} normal-only pins cannot perform rich in-hand manipulation.
+  \item \textbf{Resolution-force trade-off:} dense small pins improve shape resolution but reduce load capacity.
+  \item \textbf{Locking complexity:} uniform locking is hard; uneven locking can cause slip or sensor drift.
+  \item \textbf{Cleaning:} food, medical, and recycling applications may be hard unless the pad is sealed or skinned.
+  \item \textbf{Cycle time:} pin seating, sensing, locking, and verification can be slower than simple suction or jaws.
+  \item \textbf{Integration burden:} customers need software outputs that are simple and reliable, not raw sensor arrays.
+\end{enumerate}
+
+\subsection{Strategic Advantage}
+
+The strongest strategic advantage is that \GaugeHand{} can bridge two worlds:
+
+\begin{itemize}[leftmargin=*]
+  \item the simplicity and robustness of industrial grippers;
+  \item the tactile richness and shape adaptability normally associated with dexterous hands.
+\end{itemize}
+
+If executed well, it can be sold as a smarter gripper rather than a cheaper hand. That is a better market entry point.
+
+\section{Difficulties and Failure Modes}
+
+\subsection{Mechanical Failure Modes}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Pin jamming:} object contact at an angle creates side loads and friction.
+  \item \textbf{Pin buckling:} long thin pins bend under compression.
+  \item \textbf{Spring fatigue:} repeated compression changes return force.
+  \item \textbf{Tip wear:} elastomer tips polish, tear, or detach.
+  \item \textbf{Clamp wear:} locking plates wear and produce uneven friction.
+  \item \textbf{Debris ingress:} dust and fibers increase sliding friction.
+  \item \textbf{Overload:} object weight creates moments that exceed pin or pad strength.
+\end{itemize}
+
+\subsection{Sensing Failure Modes}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Sensor drift:} temperature or wear changes the depth baseline.
+  \item \textbf{Cross-talk:} capacitive or magnetic sensors interfere with neighbors.
+  \item \textbf{Wiring failure:} high sensor count creates fragile harnesses.
+  \item \textbf{Ambiguous contact:} the same depth map can correspond to multiple object poses.
+  \item \textbf{Force ambiguity:} displacement does not equal force unless spring and friction states are known.
+\end{itemize}
+
+\subsection{Control Failure Modes}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{False stability:} a large contact area may still have poor force closure.
+  \item \textbf{Hidden slip:} object moves under the skin without obvious depth-map change.
+  \item \textbf{Over-clamping:} more force improves stability but damages fragile objects.
+  \item \textbf{Under-clamping:} low force protects objects but causes slip.
+  \item \textbf{Mode confusion:} shear actuation can rotate some shapes and eject others.
+\end{itemize}
+
+\subsection{Business Failure Modes}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Too broad a promise:} selling "general dexterity" before proving a beachhead.
+  \item \textbf{Too expensive for a gripper:} BOM and assembly costs make it compare poorly with simpler EOAT.
+  \item \textbf{Too fragile for factories:} lab demo works but dust, oil, and impacts kill reliability.
+  \item \textbf{No integration story:} customers cannot use raw tactile maps without simple software outputs.
+  \item \textbf{Unclear ROI:} customers need fewer failed picks, fewer tool changes, less damage, or faster changeover.
+\end{itemize}
+
+\section{Design Suggestions}
+
+\subsection{Architecture Recommendation}
+
+The recommended first architecture is two opposing pin-array pads. This is the best balance of novelty, feasibility, and market relevance.
+
+\begin{itemize}[leftmargin=*]
+  \item A single pin palm is useful for research but not enough for pickup.
+  \item A two-pad gripper can be benchmarked directly against flat jaws, soft jaws, vacuum, and commercial adaptive grippers.
+  \item A two-pad module can later become one finger pair of a three-pad hand.
+  \item It is easier to mount on existing robot arms and cobots.
+\end{itemize}
+
+\subsection{Pin Cartridge}
+
+Recommended starting dimensions:
+
+\begin{itemize}[leftmargin=*]
+  \item Array: 10 x 10 or 12 x 12 pins per pad.
+  \item Pin pitch: 6 to 8 mm for MVP; smaller pitch only after binding is solved.
+  \item Stroke: 30 to 50 mm.
+  \item Pin diameter: 3 to 5 mm.
+  \item Contact surface: removable silicone, TPU, or rubber tips; later a continuous soft skin.
+  \item Return: compression spring per pin, low preload.
+  \item Guide: low-friction polymer bushing or precision printed sleeve.
+  \item Locking: shared or segmented clamp plate.
+\end{itemize}
+
+\subsection{Sensing}
+
+Recommended MVP sensing:
+
+\begin{itemize}[leftmargin=*]
+  \item one displacement signal per pin;
+  \item one closure motor current/torque estimate;
+  \item one pad-level force sensor if budget allows;
+  \item software detection of stuck pins and outliers.
+\end{itemize}
+
+Candidate per-pin sensing approaches:
+
+\begin{longtable}{L{0.22\textwidth} L{0.31\textwidth} L{0.35\textwidth}}
+\toprule
+\textbf{Method} & \textbf{Pros} & \textbf{Cons} \\
+\midrule
+\endhead
+Hall sensor plus magnet & Compact, cheap, tolerant of dirt, easy electronics. & Magnetic cross-talk, calibration per pin. \\
+Capacitive sensing & Recent pin-array literature support; printable possibilities. & Cross-talk, humidity, analog front-end complexity. \\
+Optical encoder strip & Good resolution; direct displacement. & Dust sensitivity, alignment burden. \\
+Camera observing pin backs & Low wiring; many pins per camera. & Occlusion, lighting, processing, mechanical package. \\
+Resistive strip/potentiometer & Simple concept. & Wear and drift. \\
+\bottomrule
+\end{longtable}
+
+For speed, Hall sensors are probably the best MVP choice unless the team has strong capacitive sensing experience.
+
+\subsection{Locking}
+
+Start with a shared clamp plate. The lock should be designed as a measurable subsystem:
+
+\begin{itemize}[leftmargin=*]
+  \item record clamp force or actuator current;
+  \item measure pin creep under load;
+  \item test repeated lock/unlock cycles;
+  \item segment the lock into zones if uniformity is poor.
+\end{itemize}
+
+Do not start with local locks per pin. Local locks are attractive but will inflate BOM, wiring, thermal management, and assembly.
+
+\subsection{Soft Contact Interface}
+
+Use replaceable tips for the first prototype. Move to a continuous skin when:
+
+\begin{itemize}[leftmargin=*]
+  \item fragile-object handling becomes a target;
+  \item cleaning matters;
+  \item shear sensing or shear actuation is required;
+  \item pressure distribution must be improved.
+\end{itemize}
+
+A continuous skin can protect pins from contamination, but it also couples neighboring pins and blurs the depth map. That trade-off should be measured rather than assumed.
+
+\subsection{Software Interface}
+
+The customer should not receive only raw pin values. The MVP API should return:
+
+\begin{itemize}[leftmargin=*]
+  \item pin depth map;
+  \item contact mask;
+  \item contact area;
+  \item estimated object seating center;
+  \item left/right pad symmetry score;
+  \item stuck-pin health map;
+  \item simple grasp stability score;
+  \item slip warning if available.
+\end{itemize}
+
+This turns the device from "weird hardware" into usable smart EOAT.
+
+\section{MVP Definition}
+
+\subsection{MVP Objective}
+
+The MVP objective is:
+
+\begin{quote}
+Demonstrate that a self-sensing, lockable two-pad contour-field gripper can pick and hold irregular objects more reliably than flat jaws, while producing a useful tactile depth map.
+\end{quote}
+
+The MVP should not attempt full dexterous manipulation. That belongs to the next milestone.
+
+\subsection{MVP Hardware}
+
+\begin{longtable}{L{0.25\textwidth} L{0.62\textwidth}}
+\toprule
+\textbf{Subsystem} & \textbf{MVP specification} \\
+\midrule
+\endhead
+Gripper architecture & Two opposing square pin-array pads on a parallel-jaw mechanism. \\
+Pad size & Approximately 70 x 70 mm to 100 x 100 mm active contact area. \\
+Pin array & 10 x 10 or 12 x 12 per pad. \\
+Pin stroke & 30 to 50 mm. \\
+Pin pitch & 6 to 8 mm. \\
+Pin return & Individual compression springs. \\
+Contact tips & Replaceable soft rubber or TPU tips. \\
+Locking & Shared clamp plate per pad, or one clamp across both pads if mechanically simpler. \\
+Displacement sensing & Hall sensor or capacitive sensor per pin; target 1 mm resolution or better. \\
+Actuation & Stepper, servo, or existing gripper base with controllable closure speed and force proxy. \\
+Controller & Microcontroller for sensor acquisition; ROS 2 or Python API for host. \\
+Safety & Mechanical force limits, software closure limits, emergency release. \\
+\bottomrule
+\end{longtable}
+
+\subsection{MVP Software}
+
+The MVP software should provide:
+
+\begin{itemize}[leftmargin=*]
+  \item sensor calibration routine;
+  \item depth-map visualization;
+  \item contact-mask extraction;
+  \item object seating score;
+  \item basic slip or creep detection from depth-map changes;
+  \item open/close/lock/unlock commands;
+  \item logging for experiments;
+  \item ROS 2 topic bridge if robotics integration is planned.
+\end{itemize}
+
+\subsection{MVP Test Set}
+
+Objects:
+
+\begin{itemize}[leftmargin=*]
+  \item sphere, cube, cylinder, cone, and irregular 3D prints;
+  \item screwdriver, hammer, metal file, wrench, brush;
+  \item fruit-like fragile objects;
+  \item flexible packaging;
+  \item transparent or reflective objects that are visually difficult.
+\end{itemize}
+
+Baselines:
+
+\begin{itemize}[leftmargin=*]
+  \item flat parallel jaws;
+  \item soft flat jaws;
+  \item suction cup or vacuum gripper where applicable;
+  \item one commercial adaptive gripper if available.
+\end{itemize}
+
+Metrics:
+
+\begin{itemize}[leftmargin=*]
+  \item pickup success rate;
+  \item maximum payload by object type;
+  \item slip during lift;
+  \item object damage;
+  \item allowable pose error;
+  \item shape-map repeatability;
+  \item cycle time;
+  \item stuck-pin rate;
+  \item lock creep under load.
+\end{itemize}
+
+\subsection{MVP Success Criteria}
+
+The MVP is successful if it demonstrates:
+
+\begin{enumerate}[leftmargin=*]
+  \item at least 20--30\% higher pickup success than flat jaws on irregular objects;
+  \item useful depth-map repeatability after repeated contacts;
+  \item stable lift of representative objects without manual grasp planning;
+  \item lock creep low enough to hold the object during a short manipulation sequence;
+  \item no frequent pin binding during randomized approaches;
+  \item a clear customer-relevant task where the added complexity has ROI.
+\end{enumerate}
+
+\section{Roadmap}
+
+\subsection{Phase 0: Literature, Requirements, and Bench Prototype}
+
+Duration: 2 to 4 weeks.
+
+Outputs:
+
+\begin{itemize}[leftmargin=*]
+  \item detailed requirements for first object set;
+  \item pin pitch/stroke trade study;
+  \item single-row pin test rig;
+  \item sensor selection test;
+  \item preliminary CAD.
+\end{itemize}
+
+Kill criteria:
+
+\begin{itemize}[leftmargin=*]
+  \item pins bind under mild off-axis loads;
+  \item displacement sensing cannot be packaged at target pitch;
+  \item locking force causes unacceptable pin wear.
+\end{itemize}
+
+\subsection{Phase 1: Single Self-Sensing Pin Pad}
+
+Duration: 1 to 2 months.
+
+Outputs:
+
+\begin{itemize}[leftmargin=*]
+  \item 10 x 10 or 12 x 12 pin pad;
+  \item displacement map;
+  \item lock/unlock mechanism;
+  \item calibration and visualization software;
+  \item compression and creep tests.
+\end{itemize}
+
+Key tests:
+
+\begin{itemize}[leftmargin=*]
+  \item repeatability under known calibration objects;
+  \item pin friction before and after debris exposure;
+  \item lock creep under static load;
+  \item tip wear after repeated contacts.
+\end{itemize}
+
+\subsection{Phase 2: Opposed Two-Pad Gripper MVP}
+
+Duration: 2 to 4 months.
+
+Outputs:
+
+\begin{itemize}[leftmargin=*]
+  \item two-pad gripper hardware;
+  \item macro closure control;
+  \item pin-map fusion from both pads;
+  \item grasp stability score;
+  \item benchmark against flat and soft jaws.
+\end{itemize}
+
+Key tests:
+
+\begin{itemize}[leftmargin=*]
+  \item high-mix pickup;
+  \item randomized object pose;
+  \item fragile-object damage;
+  \item tool-handle pitch stability;
+  \item recovery from incipient slip if detectable.
+\end{itemize}
+
+\subsection{Phase 3: Shear-Capable Contact Field}
+
+Duration: 3 to 6 months after MVP.
+
+Outputs:
+
+\begin{itemize}[leftmargin=*]
+  \item soft skin over pin field;
+  \item x/y tendon or belt shear actuation;
+  \item shear sensing or slip sensing;
+  \item low-dimensional manipulation modes;
+  \item in-grasp rotation and translation demos.
+\end{itemize}
+
+Key tests:
+
+\begin{itemize}[leftmargin=*]
+  \item rotate cylinder or tool handle in grasp;
+  \item translate object laterally between pads;
+  \item maintain grasp while external load changes;
+  \item compare manipulation performance with passive version.
+\end{itemize}
+
+\subsection{Phase 4: Product Prototype}
+
+Duration: 6 to 12 months after proof-of-concept.
+
+Outputs:
+
+\begin{itemize}[leftmargin=*]
+  \item cartridgeized pin pads;
+  \item sealed or skin-covered contact surface;
+  \item robot mounting flange;
+  \item documented API;
+  \item safety analysis aligned with industrial robot integration standards;
+  \item pilot deployment with one target customer.
+\end{itemize}
+
+\section{Safety and Compliance}
+
+End-effectors are part of robot applications and cells. ISO 10218-1:2025 and ISO 10218-2:2025 provide safety requirements for industrial robots and robot applications \cite{iso10218_1_2025,iso10218_2_2025}. ANSI/A3 R15.06-2025 updates the U.S. industrial robot safety standard and adopts ISO 10218-1/-2:2025 with additional application guidance \cite{a3_r1506_2025}.
+
+For \GaugeHand{}, safety work should cover:
+
+\begin{itemize}[leftmargin=*]
+  \item pinch hazards between pins and object;
+  \item unexpected release if lock fails;
+  \item stored spring energy;
+  \item sharp or broken pins;
+  \item maximum closure force;
+  \item collaborative contact force limits if used near humans;
+  \item cybersecurity and command validation for networked EOAT;
+  \item emergency release and power-loss behavior.
+\end{itemize}
+
+The safest default is fail-open or fail-compliant unless the application requires fail-hold. If fail-hold is required, the design must provide a controlled manual release.
+
+\section{Business Model}
+
+\subsection{Likely Product Forms}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Research kit:} self-sensing contour-field pad or two-pad gripper with open API.
+  \item \textbf{Industrial gripper module:} rugged two-pad adaptive gripper for high-mix handling.
+  \item \textbf{Cartridge platform:} replaceable pin-field pads for different object classes.
+  \item \textbf{Humanoid/manipulator OEM module:} contour-field palm or pad sold to robot companies.
+  \item \textbf{Application cell:} gripper plus robot plus software for a specific use case.
+\end{enumerate}
+
+\subsection{Pricing Logic}
+
+The product cannot be priced only as a passive gripper. Its value comes from:
+
+\begin{itemize}[leftmargin=*]
+  \item reducing failed picks;
+  \item reducing tool changes;
+  \item reducing custom fixture engineering;
+  \item reducing object damage;
+  \item enabling automation of previously manual high-mix tasks;
+  \item providing tactile data for process verification.
+\end{itemize}
+
+Early pricing can be research-kit oriented. Industrial pricing must be justified by ROI per cell.
+
+\subsection{Go-to-Market Recommendation}
+
+Start with a narrow pilot:
+
+\begin{itemize}[leftmargin=*]
+  \item one robot arm platform;
+  \item one object class;
+  \item one benchmark against a baseline gripper;
+  \item one measurable customer pain.
+\end{itemize}
+
+Do not initially sell to every robotics vertical. The concept needs proof in one repeatable application.
+
+\section{Intellectual Property Considerations}
+
+This report is not a freedom-to-operate analysis. The field includes prior art in pin-array grippers, jamming grippers, adaptive grippers, tactile sensors, and distributed manipulation. Any commercialization should include a patent search around:
+
+\begin{itemize}[leftmargin=*]
+  \item pin-array gripper mechanisms;
+  \item lockable contour gauges;
+  \item variable-stiffness gripper pads;
+  \item per-pin displacement sensing;
+  \item tactile skins over pin arrays;
+  \item shear-actuated contact surfaces;
+  \item control of distributed manipulation arrays.
+\end{itemize}
+
+Potentially protectable areas may include:
+
+\begin{itemize}[leftmargin=*]
+  \item specific pin cartridge architecture;
+  \item combined lock and sensing mechanism;
+  \item soft-skin shear actuation over lockable pins;
+  \item calibration and health-monitoring methods;
+  \item depth-map-based grasp stability algorithms;
+  \item application-specific pin-field manipulation sequences.
+\end{itemize}
+
+\section{Research Questions}
+
+The most important research questions are:
+
+\begin{enumerate}[leftmargin=*]
+  \item What pin pitch gives the best trade-off between shape resolution, load capacity, and reliability?
+  \item How much does locking improve payload and tool stability compared with unlocked passive pins?
+  \item Can pin displacement maps predict grasp stability well enough for closed-loop control?
+  \item Can a moving soft skin generate enough shear to rotate objects without losing grip?
+  \item Can sparse shear actuators produce useful local manipulation modes?
+  \item What objects benefit most compared with flat jaws, suction, jamming, and soft grippers?
+  \item What is the minimum sensor set that produces commercially useful reliability?
+  \item How does debris exposure change pin friction and sensing accuracy?
+  \item Can the pin field be cleaned or cartridge-swapped fast enough for industrial use?
+  \item What customer task has the clearest ROI?
+\end{enumerate}
+
+\section{Recommended MVP Experiment Plan}
+
+\subsection{Experiment 1: Shape Capture Repeatability}
+
+Press known calibration objects into a single pad at repeated positions and angles. Measure depth-map repeatability, hysteresis, and stuck-pin frequency.
+
+Success:
+
+\begin{itemize}[leftmargin=*]
+  \item depth repeatability within target resolution;
+  \item less than 1\% pins stuck after repeated tests;
+  \item predictable error under off-axis load.
+\end{itemize}
+
+\subsection{Experiment 2: Locked Holding Force}
+
+Compare unlocked and locked pin fields against flat pads using irregular objects. Measure pull-out force and torque resistance.
+
+Success:
+
+\begin{itemize}[leftmargin=*]
+  \item locked pin field improves pull-out force on irregular objects;
+  \item torque resistance improves for tool handles;
+  \item lock creep is bounded.
+\end{itemize}
+
+\subsection{Experiment 3: High-Mix Pickup}
+
+Use a robot arm or test rig to pick a mixed object set from randomized poses. Compare with flat jaws and soft jaws.
+
+Success:
+
+\begin{itemize}[leftmargin=*]
+  \item higher pickup success on irregular objects;
+  \item lower object damage on fragile objects;
+  \item acceptable cycle time.
+\end{itemize}
+
+\subsection{Experiment 4: Tactile Stability Score}
+
+Train or hand-design a stability score from pin maps and macro force. Test whether it predicts failed lifts.
+
+Success:
+
+\begin{itemize}[leftmargin=*]
+  \item score separates stable and unstable grasps better than closure force alone;
+  \item score can trigger re-seat or regrasp behavior.
+\end{itemize}
+
+\subsection{Experiment 5: Shear Skin Prototype}
+
+Add a moving skin to one pad. Test whether it can translate a contacted object laterally under controlled load.
+
+Success:
+
+\begin{itemize}[leftmargin=*]
+  \item measurable tangential object motion;
+  \item no immediate skin tearing;
+  \item shear command produces repeatable direction.
+\end{itemize}
+
+\section{Final Recommendation}
+
+Proceed, but use disciplined scope.
+
+\begin{enumerate}[leftmargin=*]
+  \item Build a two-pad self-sensing lockable pin-array gripper first.
+  \item Prove it beats flat jaws on irregular-object grasping and tool stabilization.
+  \item Treat per-pin displacement as a product feature, not only a research signal.
+  \item Add shear only after the normal pin-field gripper is reliable.
+  \item Avoid claiming human-hand-equivalent dexterity until shear and slip control are demonstrated.
+  \item Target high-mix EOAT applications before humanoid general-purpose hands.
+\end{enumerate}
+
+The near-term product should be a smart adaptive gripper. The long-term research direction can be a tactile contour-field hand. The bridge between those two is controlled shear.
+
+\bibliographystyle{unsrt}
+\bibliography{gaugehand_references}
+
+\end{document}
