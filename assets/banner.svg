@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="520" viewBox="0 0 1600 520" role="img" aria-labelledby="title desc">
+  <title id="title">GaugeHand banner</title>
+  <desc id="desc">A dense contour-field robotic hand concept with a pin array adapting to an object.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071013"/>
+      <stop offset="0.45" stop-color="#102a2c"/>
+      <stop offset="1" stop-color="#24313b"/>
+    </linearGradient>
+    <linearGradient id="pin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d6f4f1"/>
+      <stop offset="1" stop-color="#68d8c7"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="520" fill="url(#bg)"/>
+  <g opacity="0.18" stroke="#c7f9f1" stroke-width="1">
+    <path d="M0 90 H1600"/>
+    <path d="M0 170 H1600"/>
+    <path d="M0 250 H1600"/>
+    <path d="M0 330 H1600"/>
+    <path d="M0 410 H1600"/>
+    <path d="M160 0 V520"/>
+    <path d="M320 0 V520"/>
+    <path d="M480 0 V520"/>
+    <path d="M640 0 V520"/>
+    <path d="M800 0 V520"/>
+    <path d="M960 0 V520"/>
+    <path d="M1120 0 V520"/>
+    <path d="M1280 0 V520"/>
+    <path d="M1440 0 V520"/>
+  </g>
+  <g transform="translate(905 78)" filter="url(#softShadow)">
+    <path d="M316 50 C405 75 455 148 441 228 C425 319 333 369 231 345 C129 321 67 237 87 152 C107 67 209 20 316 50Z" fill="#f7d8bd"/>
+    <path d="M296 91 C357 110 392 158 381 210 C369 268 309 300 241 286 C173 272 132 219 145 165 C158 110 225 69 296 91Z" fill="#f2b98d"/>
+    <path d="M223 144 C260 126 319 142 339 181 C353 209 333 243 296 256 C247 273 191 248 184 207 C179 181 195 158 223 144Z" fill="#d8895d" opacity="0.55"/>
+  </g>
+  <g transform="translate(775 62)">
+    <rect x="0" y="0" width="56" height="396" rx="24" fill="#e8fbf8" opacity="0.95"/>
+    <rect x="84" y="0" width="56" height="396" rx="24" fill="#e8fbf8" opacity="0.95"/>
+  </g>
+  <g transform="translate(630 54)">
+    <g fill="url(#pin)">
+      <rect x="0" y="22" width="190" height="8" rx="4"/>
+      <rect x="0" y="52" width="168" height="8" rx="4"/>
+      <rect x="0" y="82" width="214" height="8" rx="4"/>
+      <rect x="0" y="112" width="245" height="8" rx="4"/>
+      <rect x="0" y="142" width="264" height="8" rx="4"/>
+      <rect x="0" y="172" width="284" height="8" rx="4"/>
+      <rect x="0" y="202" width="312" height="8" rx="4"/>
+      <rect x="0" y="232" width="292" height="8" rx="4"/>
+      <rect x="0" y="262" width="250" height="8" rx="4"/>
+      <rect x="0" y="292" width="218" height="8" rx="4"/>
+      <rect x="0" y="322" width="186" height="8" rx="4"/>
+      <rect x="0" y="352" width="150" height="8" rx="4"/>
+    </g>
+    <g fill="#f4fffd">
+      <circle cx="190" cy="26" r="9"/>
+      <circle cx="168" cy="56" r="9"/>
+      <circle cx="214" cy="86" r="9"/>
+      <circle cx="245" cy="116" r="9"/>
+      <circle cx="264" cy="146" r="9"/>
+      <circle cx="284" cy="176" r="9"/>
+      <circle cx="312" cy="206" r="9"/>
+      <circle cx="292" cy="236" r="9"/>
+      <circle cx="250" cy="266" r="9"/>
+      <circle cx="218" cy="296" r="9"/>
+      <circle cx="186" cy="326" r="9"/>
+      <circle cx="150" cy="356" r="9"/>
+    </g>
+  </g>
+  <g transform="translate(110 116)">
+    <text x="0" y="0" fill="#f7fffd" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="82" font-weight="800">GaugeHand</text>
+    <text x="4" y="62" fill="#b9e8df" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="30" font-weight="600">A lockable contour-field robotic hand</text>
+    <text x="4" y="122" fill="#edf7f5" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24">Dense contact. Shape capture. Adaptive grasping.</text>
+    <g transform="translate(4 178)">
+      <rect x="0" y="0" width="178" height="42" rx="8" fill="#e8fbf8"/>
+      <text x="20" y="28" fill="#123334" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="700">lazying.art</text>
+      <rect x="198" y="0" width="214" height="42" rx="8" fill="#1f4d50" stroke="#8ee5d9"/>
+      <text x="218" y="28" fill="#e8fbf8" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="700">github.com/lachlanchen</text>
+    </g>
+  </g>
+</svg>
