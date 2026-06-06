@@ -1,8 +1,6 @@
 ---
 name: publish-repo
 description: Publish a local git repository to GitHub from Codex or AgInTi, including README/resource checks, safe commit discipline, remote creation, push, homepage, description, and topics.
-metadata:
-  short-description: Safely publish a repo to GitHub
 ---
 
 # Publish Repo
@@ -48,10 +46,22 @@ Use this skill when the user asks to publish a local repository to GitHub, add r
 
 ## Helper Script
 
-From the repository root:
+If this skill is vendored inside the target repository, run from that repository root:
 
 ```bash
 skills/publish-repo/scripts/publish_repo.sh \
+  --owner lachlanchen \
+  --repo GaugeHand \
+  --visibility public \
+  --homepage https://lazying.art \
+  --description "GaugeHand: a lockable contour-field robotic hand concept for dense-contact grasping" \
+  --topics "robotics,robotic-hand,contour-gauge,pin-array,dense-contact,tactile-sensing,soft-robotics,gripper,manipulation,hardware-research,lazying-art"
+```
+
+If installed as a Codex user skill or loaded from LazySkills, run the script by absolute path while keeping the working directory at the repository root:
+
+```bash
+/home/lachlan/ProjectsLFS/LazySkills/skills/publish-repo/scripts/publish_repo.sh \
   --owner lachlanchen \
   --repo GaugeHand \
   --visibility public \

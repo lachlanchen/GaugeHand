@@ -25,7 +25,7 @@ If there are changes, the agent must either commit them or stop and ask for scop
 ## Deterministic Publish Command
 
 ```bash
-skills/publish-repo/scripts/publish_repo.sh \
+/path/to/LazySkills/skills/publish-repo/scripts/publish_repo.sh \
   --owner "$owner" \
   --repo "$repo" \
   --visibility "$visibility" \
@@ -33,6 +33,8 @@ skills/publish-repo/scripts/publish_repo.sh \
   --description "$description" \
   --topics "$topics"
 ```
+
+When the skill is vendored inside the project repository, the local path may instead be `skills/publish-repo/scripts/publish_repo.sh`.
 
 ## Success Criteria
 
