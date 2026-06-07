@@ -63,6 +63,14 @@ GaugeHand is a proposed **lockable, self-sensing, dense-contact manipulator**:
 
 This AgInTi-generated PNG illustrates the core hardware idea: the robot keeps the LazyingArt identity and notebook reference, while its conventional hands are replaced by dense contour-gauge pin-array grippers that conform around the notebook edges.
 
+## Mechanism Close-Up
+
+<p align="center">
+  <img src="assets/gaugehand-hand-cutaway.png" alt="A close-up cutaway of a GaugeHand contour-field robotic gripper showing sliding pins, springs, sensors, locking structure, and internal rails gripping a leather notebook" width="100%">
+</p>
+
+This second AgInTi-generated PNG focuses on the hand itself: a cutaway-like macro view of the pin-array gripper, internal guide rails, springs, sensor boards, linkages, and contact pins pressing gently against the notebook.
+
 ## Why It Matters
 
 Most dexterous hands spend complexity on anthropomorphic joints. GaugeHand spends complexity on contact. That changes the engineering question from:
@@ -114,6 +122,7 @@ The MVP should beat a parallel gripper on irregular objects and beat a soft grip
 | [assets/banner.svg](assets/banner.svg) | README banner |
 | [assets/logo.svg](assets/logo.svg) | Project logo |
 | [assets/gaugehand-robot-notebook.png](assets/gaugehand-robot-notebook.png) | AgInTi concept illustration |
+| [assets/gaugehand-hand-cutaway.png](assets/gaugehand-hand-cutaway.png) | AgInTi mechanism close-up |
 
 ## Baselines To Compare
 
